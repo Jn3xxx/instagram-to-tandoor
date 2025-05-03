@@ -61,24 +61,32 @@ def send_raw_prompt(browser, prompt):
     
     try:
         # Wait for the textarea and enter the prompt
-        textarea = WebDriverWait(browser, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//textarea[@name='user-prompt']"))
+        # Wait for the textarea to appear
+        WebDriverWait(browser, 15).until(
+            EC.presence_of_element_located((By.XPATH, "//textarea[@name='user-prompt']"))
         )
-        
-        # Clear any existing text
+
+        # Wait until the textarea is not disabled
+        WebDriverWait(browser, 15).until(
+            lambda drv: drv.find_element(By.XPATH, "//textarea[@name='user-prompt']").get_attribute("disabled") is None
+        )
+
+        textarea = browser.find_element(By.XPATH, "//textarea[@name='user-prompt']")
+
+        # Clear and send prompt
         textarea.clear()
-        
-        # Enter the new prompt
         textarea.send_keys(prompt)
         textarea.send_keys(Keys.RETURN)
-        
-        # Wait for the response to complete
-        WebDriverWait(browser, 60).until(EC.presence_of_element_located((By.XPATH, "//button[@type='submit' and @disabled]")))
-        WebDriverWait(browser, 60).until_not(EC.presence_of_element_located((By.XPATH, "//button//rect[@width='10' and @height='10']")))
-        
-        # Get the page source after the response is complete
-        response = browser.page_source
-        return response
+
+        # Wait for Duck.ai to finish responding
+        WebDriverWait(browser, 60).until(
+            EC.presence_of_element_located((By.XPATH, "//button[@type='submit' and @disabled]"))
+        )
+        WebDriverWait(browser, 60).until_not(
+            EC.presence_of_element_located((By.XPATH, "//button//rect[@width='10' and @height='10']"))
+        )
+
+        return browser.page_source
         
     except Exception as e:
         logger.error(f"Failed to send prompt: {e}", exc_info=True)

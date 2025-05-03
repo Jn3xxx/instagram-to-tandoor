@@ -62,7 +62,7 @@ def send_raw_prompt(browser, prompt):
     try:
         # Wait for the textarea and enter the prompt
         textarea = WebDriverWait(browser, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//textarea[@name='user-prompt']"))
+            EC.element_to_be_clickable((By.XPATH, "//textarea[@name='user-prompt']"))
         )
         
         # Clear any existing text
